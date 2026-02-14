@@ -1,7 +1,8 @@
 const fs = require('fs');
 const path = require('path');
+const { Events } = require('discord.js');
 
-// Path to tickets.json
+// Paths
 const dataFolder = path.join(__dirname, '..', 'data');
 const ticketFile = path.join(dataFolder, 'tickets.json');
 
@@ -34,19 +35,19 @@ function saveTickets(tickets) {
   }
 }
 
-// GLOBAL TICKET STORE
 let tickets = loadTickets();
 
-// AUTO‑LOAD PERSISTENCE WHEN THIS FILE IS REQUIRED
-module.exports = (client) => {
-  console.log('[Persistence] Loaded ticket persistence module.');
+console.log('[Persistence] Persistence module loaded.');
 
-  // Auto‑repair on startup
-  client.once('ready', async () => {
-    console.log('[Persistence] Checking stored tickets…');
+// GLOBAL HOOK: When ANY client becomes ready
+require('discord.js').Client.prototype.once.call(
+  require('discord.js').Client.prototype,
+  'ready',
+  async function () {
+    console.log('[Persistence] Bot is ready. Repairing tickets…');
 
     const guildId = process.env.GUILD_ID;
-    const guild = await client.guilds.fetch(guildId).catch(() => null);
+    const guild = await this.guilds.fetch(guildId).catch(() => null);
     if (!guild) return;
 
     for (const userId of Object.keys(tickets)) {
@@ -60,10 +61,14 @@ module.exports = (client) => {
         saveTickets(tickets);
       }
     }
-  });
+  }
+);
 
-  // Detect ticket channel creation
-  client.on('channelCreate', (channel) => {
+// GLOBAL HOOK: Channel created
+require('discord.js').Client.prototype.on.call(
+  require('discord.js').Client.prototype,
+  'channelCreate',
+  (channel) => {
     if (!channel.name.includes('-')) return;
 
     const parts = channel.name.split('-');
@@ -81,20 +86,28 @@ module.exports = (client) => {
     };
 
     saveTickets(tickets);
-  });
+  }
+);
 
-  // Detect ticket deletion
-  client.on('channelDelete', (channel) => {
+// GLOBAL HOOK: Channel deleted
+require('discord.js').Client.prototype.on.call(
+  require('discord.js').Client.prototype,
+  'channelDelete',
+  (channel) => {
     for (const userId of Object.keys(tickets)) {
       if (tickets[userId].channelId === channel.id) {
         delete tickets[userId];
         saveTickets(tickets);
       }
     }
-  });
+  }
+);
 
-  // DM relay
-  client.on('messageCreate', async (message) => {
+// GLOBAL HOOK: DM relay
+require('discord.js').Client.prototype.on.call(
+  require('discord.js').Client.prototype,
+  'messageCreate',
+  async function (message) {
     if (message.author.bot) return;
     if (message.guild) return;
 
@@ -103,7 +116,7 @@ module.exports = (client) => {
 
     if (!ticket) return;
 
-    const guild = await client.guilds.fetch(process.env.GUILD_ID).catch(() => null);
+    const guild = await this.guilds.fetch(process.env.GUILD_ID).catch(() => null);
     if (!guild) return;
 
     const channel = await guild.channels.fetch(ticket.channelId).catch(() => null);
@@ -125,5 +138,5 @@ module.exports = (client) => {
         }
       ]
     });
-  });
-};
+  }
+);
