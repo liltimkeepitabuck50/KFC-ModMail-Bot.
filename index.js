@@ -259,7 +259,7 @@ client.on('interactionCreate', async (interaction) => {
         },
         {
           name: 'Department',
-          value: `**${info.name}**. Say !reply before your message to talk to the support client.`,
+          value: `**${info.name}**. Say !reply before your message to talk to the support client, !transfer to transfer, and !connect to let the user know that you have connected to their ticket.`,
           inline: false,
         }
       )
