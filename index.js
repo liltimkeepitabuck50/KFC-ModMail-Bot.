@@ -549,3 +549,5 @@ app.listen(PORT, () => {
 });
 
 client.login(TOKEN);
+
+module.exports = client;
