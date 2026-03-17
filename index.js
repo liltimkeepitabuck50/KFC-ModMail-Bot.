@@ -90,50 +90,45 @@ client.on('messageCreate', async (message) => {
     const user = message.author;
 
     // If this DM is part of an existing ticket, relay to channel
-const existing = tickets.get(user.id);
-if (existing) {
-  const guild = await client.guilds.fetch(GUILD_ID).catch(() => null);
-  if (!guild) return;
-  const channel = await guild.channels.fetch(existing.channelId).catch(() => null);
-  if (!channel) return;
+    const existing = tickets.get(user.id);
+    if (existing) {
+      const guild = await client.guilds.fetch(GUILD_ID).catch(() => null);
+      if (!guild) return;
+      const channel = await guild.channels.fetch(existing.channelId).catch(() => null);
+      if (!channel) return;
 
-  const embed = supportEmbed('New Message from User', message.content || '(no content)')
-    .setAuthor({ name: user.tag, iconURL: user.displayAvatarURL() })
-    .setFooter({ text: `User ID: ${user.id}` })
-    .setTimestamp();
+      const embed = supportEmbed('New Message from User', message.content || '(no content)')
+        .setAuthor({ name: user.tag, iconURL: user.displayAvatarURL() })
+        .setFooter({ text: `User ID: ${user.id}` })
+        .setTimestamp();
 
-  if (message.attachments.size > 0) {
-    embed.addFields({
-      name: 'Attachments',
-      value: message.attachments.map((a) => a.url).join('\n'),
-    });
-  }
+      if (message.attachments.size > 0) {
+        embed.addFields({
+          name: 'Attachments',
+          value: message.attachments.map((a) => a.url).join('\n'),
+        });
+      }
 
-  await channel.send({ embeds: [embed] });
-
-  // ⭐ Add this line right here
-  await message.react('📨').catch(() => null);
-
-  return;
-}
-
+      await channel.send({ embeds: [embed] });
+      return;
+    }
 
     // No ticket yet → ask to open
     const confirmEmbed = supportEmbed(
-      'OPEN A SUPPORT TICKET 📬',
-      'Would you like to open a support ticket? '
+      'Open a Support Ticket',
+      'Would you like to open a support ticket?'
     ).addFields(
-      { name: 'Note', value: 'Opening this ticket will create a private environment for you and our staff team to chat.' }
+      { name: 'Note', value: 'A private channel will be created for you and our staff team.' }
     );
 
     const row = new ActionRowBuilder().addComponents(
       new ButtonBuilder()
         .setCustomId('ticket_confirm_open')
-        .setLabel('✔️')
+        .setLabel('Yes, open a ticket')
         .setStyle(ButtonStyle.Danger),
       new ButtonBuilder()
         .setCustomId('ticket_cancel_open')
-        .setLabel('✖️')
+        .setLabel('No, cancel')
         .setStyle(ButtonStyle.Secondary)
     );
 
@@ -245,9 +240,9 @@ client.on('interactionCreate', async (interaction) => {
     const ticketEmbed = new EmbedBuilder()
       .setColor(0x907575)
       .setTitle('🎫 New Support Ticket')
-      .setDescription('A new ticket has been opened. Please assist the person when availible.')
+      .setDescription('A new ticket has been opened.')
       .addFields(
-        { 
+        {
           name: 'User',
           value: `<@${user.id}> (${user.tag})`,
           inline: false,
@@ -264,7 +259,7 @@ client.on('interactionCreate', async (interaction) => {
         },
         {
           name: 'Department',
-          value: `**${info.name}**. Say !reply before your message to talk to the support client, !transfer to transfer, and !connect to let the user know that you have connected to their ticket.`,
+          value: `**${info.name}**`,
           inline: false,
         }
       )
@@ -396,7 +391,7 @@ client.on('interactionCreate', async (interaction) => {
       if (user) {
         const closedEmbed = supportEmbed(
           'Ticket Closed',
-          'Your ticket has been closed. Thank you for contacting us. If you would like to Re-Open/Open another ticket, just DM Me again and I got you!'
+          'Your ticket has been closed. Thank you for contacting us.'
         );
         await user.send({ embeds: [closedEmbed] }).catch(() => null);
       }
@@ -476,8 +471,8 @@ async function handleCommand(message) {
     }
 
     const embed = supportEmbed(
-      'Staff Member CONNECTED',
-      'A staff member has connected to your ticket. Please wait as this staff member review the reason you opened the ticket. If you have not stated the reason you opened it already, please do so now.'
+      'Staff Member Connected',
+      'A staff member has connected to your ticket.'
     ).addFields(
       { name: 'Staff Member', value: `${message.author.tag}`, inline: true },
       { name: 'Department', value: deptInfo ? deptInfo.name : 'Unknown', inline: true }
@@ -488,7 +483,7 @@ async function handleCommand(message) {
 
       const logEmbed = supportEmbed(
         'Connect Sent',
-        `You have connected to the user and they have been let know..\nDepartment: **${deptInfo ? deptInfo.name : 'Unknown'}**`
+        `You have connected to the user.\nDepartment: **${deptInfo ? deptInfo.name : 'Unknown'}**`
       );
       await channel.send({ embeds: [logEmbed] });
       await message.react('📨').catch(() => null);
